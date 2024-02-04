@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>2d keyboard</title>
+
+        <style>
+            :root{
+                --theme-foreground-color-2: rgb(241, 67, 67);
+                --theme-color-background: #502000;
+                --theme-color-background-light: #603000;
+            }
+            html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                box-sizing: border-box;
+                text-align: center;
+            }
+
+            header {
+                position: relative;
+                display: flex;
+                justify-content: space-between;
+                width: 100%;
+                height: 50px;
+                background-color: #fff;
+                box-shadow: 2px 0 5px #000;
+                z-index: 1;
+                font-family: 'Roboto Condensed', sans-serif;
+            }
+            header *{font-family: sans-serif;
+                line-height: 1rem;letter-spacing: unset;}
+            header > h1 {
+                display: inline;
+                color: #000;
+                vertical-align: 50%;
+                text-decoration-style: double;
+            }
+            #menu {
+                width: 100%;
+            }
+            ul.menubar{
+                position: absolute;
+                right: 0;
+                display: flex;
+                list-style: none;
+                margin: 0;
+                overflow: hidden;
+                height: 50px;
+            }
+            ul.menubar > li{
+                margin: auto 4px;
+                border: none;
+                color: black;
+            }
+            nav a{text-decoration: none; color: rgb(39, 39, 39); padding: 10px 12px;}
+            nav ul li:not(:first-child):hover{background-color: rgba(136, 19, 19, 0.5);}
+
+            #twoDContainer {
+                position: relative;
+                display: inline-flex;
+                width: 100%;
+                min-height: 8rem;
+                margin: 1rem 0;
+                padding: 5px;
+                overflow-x: auto;
+                background: linear-gradient(#2e2e2e, #a8a8a8);
+                box-shadow: 0 2px 6px #000;
+                box-sizing: border-box;
+                justify-content: center;
+            }
+            .octave {
+                position: relative;
+                display: inline-flex;
+                height: 120px;
+            }
+            div.whiteKey2d {
+                position: relative;
+                top: 30px;
+                height: 75%;
+                margin-right: 2px;
+                background-color: #fff;
+                opacity: 1;
+                box-shadow: 2px 0 3px #000;
+                user-select: none;
+            }
+            div.blackKey2d {
+                position: absolute;
+                left: 0;
+                height: 40%;
+                top: 30px;
+                background-color: #000;
+                opacity: 1;
+                user-select: none;
+            }
+            div.pressedKey2d {
+                background-color: green;
+            }
+            div.whiteKey2d:hover {
+                background-color: grey;
+            }
+            div.blackKey2d:hover {
+                background-color: #2b2b2b;
+            }
+            .keylabeltext {
+                font-size: 0.8rem;
+                position: relative;
+                left: 40%;
+                font-family: 'Roboto Condensed', sans-serif;
+                letter-spacing: unset;
+                line-height: 1rem;
+            }
+            .hollowButton{margin:1rem; padding: 1rem; outline: none; border-radius: 2rem / 2rem; border: 1px solid var(--theme-foreground-color-2); color: var(--theme-color-purple); cursor: pointer; transition: 0.6s; text-decoration: none; display: inline-block; white-space: nowrap; text-overflow: ellipsis;}
+            .filledButton{padding: 1rem; outline: none; border-radius: 2rem / 2rem; color: var(--theme-color-purple); background-color: var(--theme-color1); cursor: pointer; text-decoration: none; display: inline-block; white-space: nowrap; text-overflow: ellipsis;}
+            .hollowButton:hover{padding: 1rem 2rem; text-overflow: unset;}
+            /*circle{r: 2rem}
+            .circle{transform: translateX(0);}
+            .circle :not(.active){mix-blend-mode: screen;}
+            .circle:not(:first-child):not(:hover) .active{animation: shuffle2 .3s; mix-blend-mode: color-dodge;}
+            .circle:not(:first-child):hover .active{animation: shuffle .3s; mix-blend-mode: normal;}
+            @keyframes shuffle {
+                from{transform: translateX(0);}
+                50%{transform: translateX(-2rem);}
+                to{transform: translateX(0);}
+            }
+            @keyframes shuffle2 {
+                from{transform: translateX(0);}
+                50%{transform: translateX(-2rem);}
+                to{transform: translateX(0);}
+            }*/
+        </style>
+    </head>
+    <body>
+        <header>
+            <nav id="menu">
+                <ul class="menubar">
+                    <li id="demo"><a href="elitexclusiveapparels/index.html">Elitexclusiveapparels</a></li>
+                    <li><a href="piano3d.html">3D Piano</a></li>
+                    <li><a href="PixelArt/index.html">Pixel Art</a></li>
+                    <li><a href="https://9apps.com/id/android-games/chunnin-evader/">Game</a></li>
+                </ul>
+            </nav>
+        </header>
+        <button id="start" class="hollowButton">Start</button>
+        <div id="twoDContainer"></div>
+        <button id="play" class="hollowButton" style="display: none;">Play</button>
+        <button id="stop" class="hollowButton" style="display: none;">Stop</button>
+
+        <!--<svg viewBox="0 0 200 200" width="40rem" height="40rem">
+            <g id="blue" class="circle"><circle cx="120" cy="40" r="40" fill="transparent"/><circle class="active" cx="120" cy="40" r="40" fill="blue"/></g>
+            <g id="lime" class="circle"><circle cx="80" cy="40" r="40" fill="transparent"/><circle class="active" cx="80" cy="40" r="40" fill="lime"/></g>
+            <g id="red" class="circle"><circle cx="40" cy="40" r="40" fill="transparent"/><circle class="active" cx="40" cy="40" r="40" fill="red"/></g>
+        </svg>-->
+
+        <script>
+            const notekeys = [{note: 'C', tone: 'do'}, {note:'C#', tone: 'di'}, {note:'D', tone: 're'}, {note:'D#', tone:'ri'},
+                                {note: 'E', tone: 'mi'}, {note:'F', tone:'fa'}, {note:'F#', tone: 'fe'}, {note:'G', tone: 'so'}, 
+                                {note:'G#', tone: 'zi'}, {note:'A', tone: 'la'}, {note:'A#', tone:'to'}, {note:'B', tone: 'ti'}];
+
+            const keyMaps = {C0: 'z', D0: 'x', E0: 'c', F0: 'v', G0: 'b', A0: 'n', B0 : 'm', C1: ',', D1: '.', E1: '/', G2:'d', 
+            'G#2':'s', A2: 'a', 'A#2': '`', B2: '1', C3: 'q', 'C#3': '2', D3: 'w', 'D#3:': '3', E3: 'e', F3: 'r', 'F#3': '5', G3: 't', 
+            'G#3': '6', A3: 'y', 'A#3': '7', B3: 'u', C4: 'i', 'C#4': '9', D4: 'o', 'D#4': '0', E4: 'p', F4: '[', 'F#4': '=', G4: ']'};
+            
+            const songObject = {
+                bps: 3,
+                order: [
+                    {hand: 0, intervalIndex: 0}, {hand: 0, intervalIndex: 0}, {hand: 0, intervalIndex: 0}, {hand: 1, intervalIndex: 1}
+                ],
+                clickDelay: [0, 0],
+                intervals: [
+                    [
+                        3, 3, 3, 3, 3, 3, 3, 3,
+                        3, 3, 3, 3, 3, 3, 3, 3,
+                        3, 3, 3, 3, 3, 3, 3, 3,
+                        3, 3, 3, 3, 3, 3, 3, 3,
+                        3, 3, 3, 3, 3, 3, 3, 3,
+                        3, 3, 3, 3, 3, 3, 3, 3,
+                        3, 3, 3, 3, 3, 3, 3, 3,
+
+                        3, 3, 3, 3, 3, 3, 3, 3,
+                        3, 3, 3, 3, 3, 3, 3, 3,
+                        3, 3, 3, 3, 3, 3, 3, 3,
+                        3, 3, 3, 3
+                    ],
+                    [
+                        6, 6, 10, 1, 1, 6, 6, 11, 1,
+                        6, 6, 6, 2, 2, 2, 6, 6, 12,
+                        2, 2, 1, 1, 2, 4,
+                        2, 2, 1, 1, 2, 4,
+                        2, 2, 1, 1, 6,
+                        2, 6, 2, 1, 1, 6, 6,
+
+                        6, 6, 10, 1, 1, 6, 6, 11, 1,
+                        6, 6, 6, 2, 2, 2, 6, 6, 12
+                    ]
+                ],
+                keys: [
+                    [
+                        -12, -12, -8, -8, -15, -15, -15, -15,
+                        -19, -19, -12, -12, -17, -17, -17, -17,
+                        -19, -19, -17, -17, -15, -15, -19, -19, 
+                        -12, -12, -17, -17, -12, -12, -12, -12,
+
+                        -8, -8, -13, -13, -8, -8, -13, -13, -8, -8, -13, -13,
+                        -8, -8, -15, -15, -10, -10, -17, -17,
+
+                        -12, -12, -8, -8, -15, -15, -15, -15,
+                        -19, -19, -12, -12, -17, -17, -17, -17,
+                        -19, -19, -17, -17, -15, -15, -19, -19, 
+                        -12, -12, -17, -17, -12, -12, -12, -12
+                    ],
+                    [
+                        -8, -8, -5, -5, -12, -12, -12, -12,
+                        -15, -15, -8, -8, -13, -13, -13, -13,
+                        -15, -15, -13, -13, -12, -12, -15, -15,
+                        -8, -8, -13, -13, -8, -8, -8, -8,
+
+                        -5, -5, -9, -9, -5, -5, -9, -9, -5, -5, -9, -9,
+                        -5, -5, -11, -11, -7, -7, -13, -13,
+
+                        -8, -8, -5, -5, -12, -12, -12, -12,
+                        -15, -15, -8, -8, -13, -13, -13, -13,
+                        -15, -15, -13, -13, -12, -12, -15, -15,
+                        -8, -8, -13, -13, -8, -8, -8, -8
+                    ],
+                    [
+                        -5, -5, -1, -1, -8, -8, -8, -8,
+                        -12, -12, -5, -5, -10, -10, -10, -10,
+                        -12, -12, -10, -10, -8, -8, -12, -12,
+                        -5, -5, -10, -10, -5, -5, -5, -5,
+
+                        -1, -1, -6, -6, -1, -1, -6, -6, -1, -1, -6, -6,
+                        -1, -1, -8, -8, -3, -3, -10, -10,
+
+                        -5, -5, -1, -1, -8, -8, -8, -8,
+                        -12, -12, -5, -5, -10, -10, -10, -10,
+                        -12, -12, -10, -10, -8, -8, -12, -12,
+                        -5, -5, -10, -10, -5, -5, -5, -5
+                    ],
+
+                    [
+                        0, 7, 0, 2, 4, 5, 4, 2,
+                        -5, -3, -1, 0, 2, 4, 5, 4, 2, 0,
+                        -1, 4, 7, 11, 9, 6,
+                        -1, 4, 7, 11, 9, 6,
+                        -1, 4, 7, 11, 9,
+                        7, 7, 4, 7, 4, 5, 2, 
+
+                        0, 7, 0, 2, 4, 5, 4, 2,
+                        -5, -3, -1, 0, 2, 4, 5, 4, 2, 0
+                    ]
+                ]
+            }
+
+            let twoDContainer = document.getElementById("twoDContainer");
+            let startButton = document.querySelector('#start')
+            let playButton = document.querySelector('#play')
+            let stopButton = document.querySelector('#stop')
+            let audioCtx;
+            let whiteKeys2d, blackKeys2d;
+            let noteFreq = [[]];
+            let oscList = [];
+            let stillSinging = false
+
+            //number of octaves that will be present on the keyboard
+            const KEYBOARD_OCTAVES = 5; 
+            let pianoWaveForm = null;
+            
+            //The oscillators that the computer will be using for playing of songs, grouped together with their gains.
+            let songNodes;
+            let songData = null; 
+
+            function createNoteTable (howManyOct, f){
+                let noteFreq = [];
+                for(let i = 0; i<howManyOct; i++){
+                    noteFreq[i] = [];
+                }
+                for(let i = 0; i<noteFreq.length; i++){
+                    noteFreq[i][0] = f * Math.pow(2, i - 4 + 3/12);
+                    noteFreq[i][1] = f * Math.pow(2, i - 4 + 4/12);
+                    noteFreq[i][2] = f * Math.pow(2, i - 4 + 5/12);
+                    noteFreq[i][3] = f * Math.pow(2, i - 4 + 6/12); //"D#"
+                    noteFreq[i][4] = f * Math.pow(2, i - 4 + 7/12);
+                    noteFreq[i][5] = f * Math.pow(2, i - 4 + 8/12);
+                    noteFreq[i][6] = f * Math.pow(2, i - 4 + 9/12);
+                    noteFreq[i][7] = f * Math.pow(2, i - 4 + 10/12);
+                    noteFreq[i][8] = f * Math.pow(2, i - 4 + 11/12); //G#
+                    noteFreq[i][9] = f * Math.pow(2, i - 4 + 12/12);
+                    noteFreq[i][10] = f * Math.pow(2, i - 4 + 13/12);
+                    noteFreq[i][11] = f * Math.pow(2, i - 4 + 14/12);
+                }
+                return noteFreq;
+            }
+
+            function setup (howManyOct, baseFreq){
+                noteFreq = createNoteTable(5, baseFreq);
+                let pianoSoundArray = [1,.85,0.388,0.1895,0.1385,0.10395,0.0717,0.045,0.022,0.007,0.0042,0.004,0.01,0.0268595451742011,0.0231412953349765,0.012673446908949719,0.0032184638822102493,0.000001993962250069198,0.001319835743713865,0.0021539903428633104,0.0009898923292822354,0.000040048953989200855,0.00011918517718574168,0.00013758023703168589,0.000006950971811991208,0.000012484597255698079,0.000004752118033929267,    6.046717415555988e-7,4.1971069566096074e-7,7.797830480583668e-8,3.7794010165722764e-9,5.118757305357835e-9,6.002058643846997e-10,2.4266916112705385e-11,6.298816101059203e-13,6.02157981144252e-14,1.6483690185494228e-14,2.114075971593984e-15,3.642321490737865e-17,8.646430185387688e-19,5.878361528313357e-21,2.9079895736490585e-22,2.2926980233852034e-24,4.931849190021794e-27,5.7756083753326316e-30,1.8583467136682407e-32,2.4041463242206162e-35,3.477796106302256e-39,9.867949244624119e-43,1.2715441260624947e-47]
+                let sineTerms = new Float32Array(pianoSoundArray);
+                let cosineTerms = new Float32Array(pianoSoundArray);
+                pianoWaveForm = audioCtx.createPeriodicWave(sineTerms, cosineTerms);
+                for(let i = 0; i< KEYBOARD_OCTAVES; i++) oscList[i] = [];
+            }
+
+            function showPressedKey(k, timeout) { 
+                const bk = [1,3,6,8,10, 13,15,18,20,22, 25,27,30,32,34, 37,39,42,44,46, 49,51,54,56,58];
+                const wk = [0,2,4,5,7,9,11, 12,14,16,17,19,21,23, 24,26,28,29,31,33,35, 36,38,40,41,43,45,47, 48,50,52,53,55,57,59];
+
+                if (bk.indexOf(k+36) >= 0){
+                    let index = bk.indexOf(k+36);
+                    blackKeys2d[index].classList.add('pressedKey2d');
+                    setTimeout(() => blackKeys2d[index].classList.remove('pressedKey2d'), timeout);
+                } else {
+                    let index = wk.indexOf(k+36);
+                    whiteKeys2d[index].classList.add('pressedKey2d');
+                    setTimeout(() => whiteKeys2d[index].classList.remove('pressedKey2d'), timeout);
+                }
+            }
+
+            function startSong (songData){
+                prepareOscillators(songNodes);
+
+                let lastToFinish = () => {
+                    let last = 0;
+                    Object.values(songData).forEach(val1 =>{
+                        val1.forEach(val2 => {
+                            last = Math.max(last, val2.i[val2.i.length - 1]);
+                        });
+                    });
+                    return last;
+                }
+                
+                const songDuration = lastToFinish()
+                let scheduleTimeValues = (oscObj, finger) => {
+                    let start;
+                    let strikeCount = 0;
+                    let lag = 10;
+                    stillSinging =  true
+                    requestAnimationFrame(looper);
+                    for (let j = 0; j < finger.i.length; j++){
+                        oscObj.osc1.frequency.setValueAtTime(finger.n[j], currentTime + finger.i[j]);
+                        oscObj.gain.gain.setValueAtTime(Math.min(.7 * Math.exp(-finger.n[j]/880), .45), currentTime +finger.i[j]);
+                        oscObj.gain.gain.setTargetAtTime(.0001, currentTime + finger.i[j], 0.4);
+                    }
+                    function looper(timeStamp){
+                        if (start === undefined) start = timeStamp;
+                        let elapsed = timeStamp - start;
+                        
+                        //The following loop ensures the pushing of all keys and are pushed when it's their time.
+                        //when it's time, push the key;
+                        if (elapsed >= (finger.i[strikeCount]*1000) - Math.max(0,lag)){
+                            lag += elapsed - (finger.i[strikeCount] * 1000);
+                            showPressedKey(finger.k[strikeCount], 400);
+                            strikeCount++;
+                        }
+                        if(elapsed >= (songDuration + 2)*1000 || !stillSinging) stopSong(false);
+                        else requestAnimationFrame(looper);
+                    }
+                }
+                let currentTime = audioCtx.currentTime;
+                for(let i = 0; i < Math.max(songData.left.length, songData.right.length); i++){
+                    if (i < songData.left.length ){
+                        scheduleTimeValues(songNodes.left[i], songData.left[i]);
+                    }if (i < songData.right.length){
+                        scheduleTimeValues(songNodes.right[i], songData.right[i]);
+                    }
+                }
+            }
+            
+            function stopSong (){
+                if(songNodes){
+                    Object.values(songNodes).forEach(v => {
+                        v.forEach((val) =>{
+                            val.gain.gain.cancelScheduledValues(audioCtx.currentTime);
+                            val.osc1.frequency.cancelScheduledValues(audioCtx.currentTime);
+                            val.osc1.stop(audioCtx.currentTime);
+                        });
+                    });
+                    songNodes = undefined;
+                    stillSinging = false
+                }
+            }
+
+            function prepareOscillators(songNodes){
+                Object.values(songNodes).forEach(v =>{
+                    v.forEach(val => {
+                        val.osc1.setPeriodicWave(pianoWaveForm);
+                        val.osc1.frequency.value = 880;
+                        val.gain.gain.value = 0.0001;
+                        val.osc1.connect(val.gain);
+                        val.gain.connect(audioCtx.destination);
+                        val.osc1.start()
+                    });
+                });
+            }
+            
+            function playTone (freq){
+                let decay = 4; //controls how long the sound will play for.
+                let osc1 = audioCtx.createOscillator();
+                let keyGain = audioCtx.createGain();
+                osc1.connect(keyGain);
+                keyGain.connect(audioCtx.destination);
+                keyGain.gain.value = Math.max((Math.exp(-freq/880)), .25);
+                let sineTerms = null, cosineTerms = null;
+                let factor = (freq /4000)* 1.5 + 1, harmonics = [];
+                for (let x = 1, i=1; i<= 30; x*=factor, i++){
+                    let y = .6*(Math.sin(4*x)*Math.sin(4*x))*Math.exp(-1*x);
+                    y += .4*(Math.sin(1*x)*Math.sin(1*x))*Math.exp(-1*x);
+                    y += y*y*y;
+                    harmonics[i-1] = y;
+                }
+                sineTerms = new Float32Array(harmonics);
+                cosineTerms = new Float32Array(harmonics);
+                pianoWaveForm = audioCtx.createPeriodicWave(sineTerms, cosineTerms);
+                osc1.setPeriodicWave(pianoWaveForm);
+                osc1.frequency.value = freq;
+                osc1.start(audioCtx.currentTime);
+                keyGain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + decay);
+                return {osc: osc1, gain: keyGain};
+            }
+
+            function stopTone(soundNodes, reverb=0.4) {
+                soundNodes.gain.gain.cancelScheduledValues(audioCtx.currentTime)
+                let easeValues = new Float32Array(10);
+                for(let i = 0; i<easeValues.length; i++) easeValues[i] = soundNodes.gain.gain.value * Math.exp(-i)
+                soundNodes.gain.gain.setValueCurveAtTime(easeValues, audioCtx.currentTime, reverb);
+                soundNodes.osc.stop(audioCtx.currentTime + reverb);
+            }
+
+            function create2dKeyboardAlt(twoDContainer){
+                for (let idx = 0; idx < KEYBOARD_OCTAVES; idx++){
+                    let keyList = noteFreq[idx];
+                    let octaveElem = document.createElement("div");
+                    const octaveWidth = /*(twoDContainer.offsetWidth - (2 * 7))/6*/240;
+                    octaveElem.style.width = octaveWidth + 'px';
+                    octaveElem.className = "octave";
+                    const whiteKeyWidth = (octaveWidth - (7 * 2)) / 7;
+
+                    keyList.forEach((key, i) => {
+                        if ([1,3,6,8,10].indexOf(i) === -1) {
+                            octaveElem.appendChild(createKey(i, idx, key, whiteKeyWidth));
+                        }
+                    });
+                    let blackKeysIndex = [1, 3, 5, 6, 8, 10];
+                    for(let i = 1; i <= blackKeysIndex.length; i++){
+                        if(i === 3) continue
+                        let keyElement = createKey(blackKeysIndex[i-1], idx, keyList[blackKeysIndex[i-1]], whiteKeyWidth/2);
+                        keyElement.style.left = (whiteKeyWidth*i)+(2*(i-1)) - (whiteKeyWidth/4) +'px';
+                        octaveElem.appendChild(keyElement);
+                    }
+                    twoDContainer.appendChild(octaveElem);
+                }
+                whiteKeys2d = document.getElementsByClassName("whiteKey2d");
+                blackKeys2d = document.getElementsByClassName("blackKey2d");
+            }
+
+            function createKey(note, octave, freq, keyWidth) {
+                let keyElement = document.createElement("div");
+                let labelElement = document.createElement("p");
+                labelElement.className = 'keylabeltext';
+                let keyMapElement = document.createElement("div");
+                keyMapElement.className = 'keylabeltext';
+
+                if ([1,3,6,8,10].indexOf(note) === -1){
+                    keyElement.className = "whiteKey2d";
+                    keyElement.style.width = keyWidth + "px";
+                    keyElement.style.left = 0 + 'px';
+                    labelElement.style.color = 'black';
+                    labelElement.style.top = '70%';
+                }else{
+                    keyElement.className = "blackKey2d";
+                    labelElement.style.left = '10%';
+                    keyElement.style.width = keyWidth + 'px';
+                }
+                keyElement.id = 'key' + octave + note;
+                keyElement.dataset["octave"] = octave;
+                keyElement.dataset["note"] = note;
+                keyElement.dataset["frequency"] = freq;
+
+                labelElement.innerHTML = notekeys[note].note + "<sub>" + octave + "</sub>";
+                if (keyMaps[note + octave]) keyMapElement.innerHTML = ''+keyMaps[note+ octave];
+                keyMapElement.style.marginBottom = "2px";
+                keyMapElement.style.textAlign = "center";
+                keyElement.appendChild(labelElement);
+                keyElement.appendChild(keyMapElement);
+
+                
+                keyElement.addEventListener("mousedown", notePressed, false);
+                keyElement.addEventListener("mouseup", noteReleased, false);
+                keyElement.addEventListener("contextmenu", e=>e.preventDefault(), false);
+
+                return keyElement;
+            }
+
+            function notePressed(event) {
+                if (event.buttons & 1) {
+                    let dataset = event.target.dataset;
+                    if (!dataset.octave) dataset = event.target.parentElement.dataset;
+                        
+                    let oct = dataset.octave;
+                    let key = dataset.note;
+                    oscList[oct][key] = playTone(dataset.frequency);
+                    document.getElementById('key' + oct + key).classList.add('pressedKey2d');
+                }
+            }
+
+            function noteReleased(event) {
+                let dataset = event.target.dataset;
+                if (!dataset.octave) dataset = event.target.parentElement.dataset;
+
+                let oct = dataset.octave;
+                let key = dataset.note;
+                stopTone(oscList[oct][key]);
+                oscList[oct][key] = null;
+                document.getElementById('key' + oct + key).classList.remove('pressedKey2d');
+            }
+
+            function createComputerOscs(number, left){
+                const compOscs = {left: [], right: []};
+                let arrayToManipulate;
+                for (let i = 0; i< number; i++){
+                    if(i < left) arrayToManipulate = compOscs.left;
+                    else arrayToManipulate = compOscs.right;
+                    let oscObj = {
+                        "osc1": audioCtx.createOscillator(),
+                        "gain": audioCtx.createGain()
+                    };
+                    arrayToManipulate.push(oscObj);
+                }
+                return compOscs;
+            }
+
+            function getFreq(key){
+                let oct = Math.floor((key+36) / 12);
+                let k = Math.abs(key+36) % 12;
+                return noteFreq[oct][k];
+            }
+
+            function getSong(){
+                songNodes = createComputerOscs(8, 4);
+                let intervals = [];
+                let bps = songObject.bps;
+                songObject.intervals.forEach((intervalArray, i)=>{
+                    // the number of beats to offset by or ignore before starting. You can think of it as a song delay variable
+                    let clickDelay = songObject.clickDelay[i];
+                    let initialClickDelay = clickDelay;
+                    let currentTimemark;
+                    let lastIntervalSkip = 0;
+                    let eachIntervalArray = intervalArray.map((interval, j)=>{
+                        if(j === 0) currentTimemark = initialClickDelay / bps; // initial timemark in seconds
+                        currentTimemark = (lastIntervalSkip / bps) + currentTimemark;
+                        clickDelay += interval;
+                        lastIntervalSkip = interval;
+                        return currentTimemark;
+                    });
+                    intervals.push(eachIntervalArray);
+                });
+                createNotesAndStartTone(intervals, songObject.keys, songObject.order);
+            }
+
+            function createNotesAndStartTone(intervals, keys, order){
+                let notes = [];
+                songData = {left: [], right: []};
+                for (let i = 0; i < keys.length; i++){
+                    notes.push([]);
+                    for (let j= 0; j < keys[i].length; j++){
+                        notes[i].push(getFreq(keys[i][j]));
+                    }
+                    if(order[i].hand === 0){
+                        songData.left.push({i: intervals[order[i].intervalIndex], k: keys[i], n: notes[i]});
+                    } else{
+                        songData.right.push({i: intervals[order[i].intervalIndex], k: keys[i], n: notes[i]});
+                    }
+                }
+                startSong(songData);
+            }
+
+            startButton.onclick = e => {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext);
+                setup (KEYBOARD_OCTAVES, 880);
+                create2dKeyboardAlt(twoDContainer)
+                startButton.style.display = 'none'
+                playButton.style.display = 'inline'
+                stopButton.style.display = 'inline'
+            }
+            playButton.onclick = e => { getSong() }
+            stopButton.onclick = e => { stopSong() }
+
+
+            function trade(start, noOfTrades){
+                let choiceOnes = start, stakeIndex = 0;
+            const stakes = [1, 1, 1, 1.1, 2.3, 5.2, 11.3, 24.6, 53.6, 117, 225/*, 556, 1211*/]
+                let result = {balance: 500, tallyMarks: new Array(stakes.length).fill(0)}
+                for(let i = 0; i< noOfTrades; i++){
+                    let random = Math.random();
+                    if(choiceOnes == random < 0.5){
+                        result.balance += 0.85 * stakes[stakeIndex]
+                        result.tallyMarks[stakeIndex]++
+                        stakeIndex = 0;
+                        choiceOnes = Math.random() < 0.5
+                    }else {
+                        result.balance -= stakes[stakeIndex]
+                        stakeIndex++;
+                        if (stakeIndex >= stakes.length){
+                            result.tallyMarks[stakeIndex-1]++
+                            console.log('aborted')
+                            return result
+                        }
+                        if(i == noOfTrades-1){
+                            console.log(result.balance)
+                            for(let j = stakeIndex - 1; j >=0; j++) result.balance += stakes[j]
+                        }
+                    }
+                    //console.log(i, random, random < 0.5 === choiceOnes)
+                    choiceOnes = !choiceOnes;
+                }
+                return result
+            }
+
+
+        </script>
+    </body>
+</html>

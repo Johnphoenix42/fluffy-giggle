@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Pixel Editor</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" href="images/thrive%20icon.png">
+        <script src="main_script.js"></script>
+        <style>
+            body{margin: 0; display: flex; align-items: center;}
+            div{
+                background-color: #222;
+                width: 100%;
+                min-height: 1rem;
+            }
+            canvas{
+                border: 2px inset #700;
+                position: relative;
+                left: 50%;
+                transform: translate(-50%, 0);
+            }
+            button {
+                outline: none;
+                margin: 8px;
+                padding: 4px 12px;
+                box-shadow: 0 0 3px #ddd;
+            }
+            button.undo[disabled]{
+                background: #888;
+            }
+            label{color:white}
+        </style>
+    </head>
+    <body>
+        <div></div>
+        <script>document.querySelector("div").appendChild(startPixelEditor({}));</script>
+    </body>
+</html>
